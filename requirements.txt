@@ -6,4 +6,5 @@ faiss-cpu
 pypdf
 sentence-transformers
 PyPDF2
+langchain-text-splitters
 
