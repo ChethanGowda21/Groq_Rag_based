@@ -4,7 +4,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_groq import ChatGroq
-from langchain.chains import RetrievalQA
+from langchain_community.chains import create_retrieval_chain
+from langchain_community.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.prompts import ChatPromptTemplate
+
 
 # --------------------------------------------------
 # Streamlit Page Config
@@ -82,11 +85,26 @@ if pdf_files:
         api_key=GROQ_API_KEY
     )
 
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
-        return_source_documents=True
+prompt = ChatPromptTemplate.from_template(
+    """
+    Answer the question using ONLY the context below.
+    Context:
+    {context}
+
+    Question:
+    {input}
+    """
+)
+
+document_chain = create_stuff_documents_chain(
+    llm=llm,
+    prompt=prompt
+)
+
+qa_chain = create_retrieval_chain(
+    retriever=retriever,
+    combine_docs_chain=document_chain
+)
     )
 
     query = st.text_input("❓ Ask a question based on the uploaded PDFs")
